@@ -27,9 +27,15 @@ jobs:
       run: |
         aws cloudformation deploy \
           --template-file 404AZStack.yaml \
-          --stack-name MedEquipStack \
+
+          --stack-name cloudformation-stack \
           --capabilities CAPABILITY_NAMED_IAM \
-          --parameter-overrides \
-            DBUsername=${{ secrets.DB_USERNAME }} \
-            DBPassword=${{ secrets.DB_PASSWORD }} \
-            KeyName=${{ secrets.KEY_NAME }}
+          --no-fail-on-empty-changeset
+
+
+          # --stack-name MedEquipStack \
+          # --capabilities CAPABILITY_NAMED_IAM \
+          # --parameter-overrides \
+          #   DBUsername=${{ secrets.DB_USERNAME }} \
+          #   DBPassword=${{ secrets.DB_PASSWORD }} \
+          #   KeyName=${{ secrets.KEY_NAME }}
