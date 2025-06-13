@@ -26,12 +26,9 @@ jobs:
     - name: Deploy CloudFormation Stack
       run: |
         aws cloudformation deploy \
-          --template-file 404AZStack.yaml \
-          --stack-name MedEquipStack \
-          --capabilities CAPABILITY_NAMED_IAM \
-          --parameter-overrides \
-            DBUsername=admin \
-            DBPassword=Test1234! \
-            KeyName=my-test-key
+        --template-file 404AZStack.yaml \
+        --stack-name MedEquipStack \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --no-fail-on-empty-changeset
 
 
