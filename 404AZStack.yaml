@@ -221,24 +221,29 @@ Outputs:
   VPCXSubnetId:
     Value: !Ref VPCXSubnet
     Export:
-      Name: med-arc-VPCXSubnetId
+      Name: med-arc2-VPCXSubnetId
+
   VPCXPublicSubnetId:
     Value: !Ref VPCXPublicSubnet
     Export:
-      Name: med-arc-VPCXPublicSubnetId
+      Name: med-arc2-VPCXPublicSubnetId
+
   VPCYSubnetId:
     Value: !Ref VPCYSubnet
     Export:
-      Name: med-arc-VPCYSubnetId
+      Name: med-arc2-VPCYSubnetId
+
   VPCXInstanceSGId:
     Value: !Ref VPCXInstanceSG
     Export:
-      Name: med-arc-VPCXInstanceSGId
+      Name: med-arc2-VPCXInstanceSGId
+
   VPCYInstanceSGId:
     Value: !Ref VPCYInstanceSG
     Export:
-      Name: med-arc-VPCYInstanceSGId
+      Name: med-arc2-VPCYInstanceSGId
+
   BastionSGId:
     Value: !Ref BastionSG
     Export:
-      Name: med-arc-BastionSGId
+      Name: med-arc2-BastionSGId

@@ -7,9 +7,9 @@ Resources:
     Properties:
       ImageId: ami-0a5c3558529277641
       InstanceType: t2.micro
-      SubnetId: !ImportValue med-arc-VPCXSubnetId
+      SubnetId: !ImportValue med-arc2-VPCXSubnetId
       SecurityGroupIds:
-        - !ImportValue med-arc-VPCXInstanceSGId
+        - !ImportValue med-arc2-VPCXInstanceSGId
       KeyName: vockey
       Tags:
         - Key: Name
@@ -20,9 +20,9 @@ Resources:
     Properties:
       ImageId: ami-0a5c3558529277641
       InstanceType: t2.micro
-      SubnetId: !ImportValue med-arc-VPCYSubnetId
+      SubnetId: !ImportValue med-arc2-VPCYSubnetId
       SecurityGroupIds:
-        - !ImportValue med-arc-VPCYInstanceSGId
+        - !ImportValue med-arc2-VPCYInstanceSGId
       KeyName: vockey
       Tags:
         - Key: Name
@@ -33,9 +33,9 @@ Resources:
     Properties:
       ImageId: ami-0a5c3558529277641
       InstanceType: t2.micro
-      SubnetId: !ImportValue med-arc-VPCXPublicSubnetId
+      SubnetId: !ImportValue med-arc2-VPCXPublicSubnetId
       SecurityGroupIds:
-        - !ImportValue med-arc-BastionSGId
+        - !ImportValue med-arc2-BastionSGId
       KeyName: vockey
       Tags:
         - Key: Name

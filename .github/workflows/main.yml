@@ -21,6 +21,15 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
 
+      - name: Delete Failed Stack if in ROLLBACK_COMPLETE
+        continue-on-error: true
+        run: |
+          status=$(aws cloudformation describe-stacks --stack-name MedEquipStack --query "Stacks[0].StackStatus" --output text)
+          if [ "$status" = "ROLLBACK_COMPLETE" ]; then
+            echo "Deleting failed stack..."
+            aws cloudformation delete-stack --stack-name MedEquipStack
+          fi
+
       - name: Deploy VPC Stack (404AZStack.yaml)
         run: |
           aws cloudformation deploy \
