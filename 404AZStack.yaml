@@ -1,209 +1,252 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: MedEquip Multi-VPC Cloud Infrastructure with Web App, DB, Peering, Load Balancer, and DNS
-
-# Parameters:
-#   KeyName:
-#     Description: EC2 KeyPair for SSH access
-#     Type: AWS::EC2::KeyPair::KeyName
-#   InstanceType:
-#     Type: String
-#     Default: t3.micro
-#     AllowedValues:
-#       - t3.micro
-#       - t3.small
-#       - t3.medium
-#     Description: EC2 instance type
-  # DBUsername:
-  #   NoEcho: true
-  #   Type: String
-  # DBPassword:
-  #   NoEcho: true
-  #   Type: String
+AWSTemplateFormatVersion: 2010-09-09
+Description: Infrastructure setup for VPC peering, EC2 instances, and security groups.
 
 Parameters:
   SshCidr:
     Type: String
     Description: CIDR block for SSH access to bastion host (e.g., your IP)
-    Default: 0.0.0.0/0 
+    Default: 0.0.0.0/0
 
 Resources:
-
-  # VPC 1: Inventory & Logistics
-  VPC1:
+  # VPC X
+  VPCX:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.10.0.0/16
+      CidrBlock: 10.100.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: VPC1-Inventory
+          Value: VPC-X
 
-  VPC1Subnet:
+  # Private Subnet for VPC X
+  VPCXSubnet:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC1
-      CidrBlock: 10.10.1.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs "" ]
+      VpcId: !Ref VPCX
+      CidrBlock: 10.100.1.0/24
+      AvailabilityZone: us-east-1a
       Tags:
         - Key: Name
-          Value: VPC1-Subnet
+          Value: VPC-X-Subnet
 
-  # VPC 2: R&D & Customer Service
-  VPC2:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.20.0.0/16
-      Tags:
-        - Key: Name
-          Value: VPC2-RnD
-
-  VPC2Subnet:
+  # Public Subnet for VPC X
+  VPCXPublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC2
-      CidrBlock: 10.20.1.0/24
-      AvailabilityZone: !Select [ 1, !GetAZs "" ]
+      VpcId: !Ref VPCX
+      CidrBlock: 10.100.2.0/24
+      AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: VPC2-Subnet
+          Value: VPC-X-Public-Subnet
 
-  # VPC Peering
-  VPCPeering:
-    Type: AWS::EC2::VPCPeeringConnection
-    Properties:
-      VpcId: !Ref VPC1
-      PeerVpcId: !Ref VPC2
-
-  # Internet Gateway and Routing for VPC1
-  IGW1:
+  # Internet Gateway
+  InternetGatewayX:
     Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: VPC-X-IGW
 
-  AttachGateway1:
+  GatewayAttachmentX:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref VPC1
-      InternetGatewayId: !Ref IGW1
+      VpcId: !Ref VPCX
+      InternetGatewayId: !Ref InternetGatewayX
 
-  RouteTable1:
+  # Route Tables for VPC X
+  VPCXPrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref VPC1
+      VpcId: !Ref VPCX
+      Tags:
+        - Key: Name
+          Value: VPC-X-Private-RouteTable
 
-  Route1:
-    Type: AWS::EC2::Route
-    DependsOn: AttachGateway1
+  VPCXPublicRouteTable:
+    Type: AWS::EC2::RouteTable
     Properties:
-      RouteTableId: !Ref RouteTable1
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref IGW1
+      VpcId: !Ref VPCX
+      Tags:
+        - Key: Name
+          Value: VPC-X-Public-RouteTable
 
-  SubnetRouteTableAssoc1:
+  PublicRouteX:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref VPCXPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayX
+
+  VPCXPrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref VPC1Subnet
-      RouteTableId: !Ref RouteTable1
+      SubnetId: !Ref VPCXSubnet
+      RouteTableId: !Ref VPCXPrivateRouteTable
 
-  # Security Group
-  InstanceSecurityGroup:
+  VPCXPublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref VPCXPublicSubnet
+      RouteTableId: !Ref VPCXPublicRouteTable
+
+  # VPC Y
+  VPCY:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.200.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: VPC-Y
+
+  VPCYSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCY
+      CidrBlock: 10.200.1.0/24
+      AvailabilityZone: us-east-1b
+      Tags:
+        - Key: Name
+          Value: VPC-Y-Subnet
+
+  VPCYRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPCY
+      Tags:
+        - Key: Name
+          Value: VPC-Y-RouteTable
+
+  VPCYSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref VPCYSubnet
+      RouteTableId: !Ref VPCYRouteTable
+
+  # VPC Peering
+  VPCXToYPeering:
+    Type: AWS::EC2::VPCPeeringConnection
+    Properties:
+      VpcId: !Ref VPCX
+      PeerVpcId: !Ref VPCY
+      Tags:
+        - Key: Name
+          Value: VPC-X-to-VPC-Y-Peering
+
+  VPCXPeeringRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref VPCXPrivateRouteTable
+      DestinationCidrBlock: 10.200.0.0/16
+      VpcPeeringConnectionId: !Ref VPCXToYPeering
+
+  VPCYPeeringRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref VPCYRouteTable
+      DestinationCidrBlock: 10.100.0.0/16
+      VpcPeeringConnectionId: !Ref VPCXToYPeering
+
+  # Security Groups
+  EICSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow HTTP, HTTPS, and SSH
-      VpcId: !Ref VPC1
+      GroupDescription: EC2 Instance Connect Endpoint
+      VpcId: !Ref VPCX
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.100.0.0/16
+      Tags:
+        - Key: Name
+          Value: EIC-Endpoint-SG-X
+
+  VPCXInstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: VPCX instance SG
+      VpcId: !Ref VPCX
+      SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 10.200.0.0/16
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref EICSecurityGroup
+      Tags:
+        - Key: Name
+          Value: VPC-X-SG
+
+  VPCYInstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: VPCY instance SG
+      VpcId: !Ref VPCY
+      SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 10.100.0.0/16
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref EICSecurityGroup
+      Tags:
+        - Key: Name
+          Value: VPC-Y-SG
+
+  BastionSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Bastion host SG
+      VpcId: !Ref VPCX
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
+          CidrIp: !Ref SshCidr
+      SecurityGroupEgress:
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.100.0.0/16
         - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-
-  # EC2 for Web App
-  WebInstance:
-    Type: AWS::EC2::Instance
-    Properties:
-      InstanceType: !Ref InstanceType
-      KeyName: !Ref KeyName
-      SubnetId: !Ref VPC1Subnet
-      ImageId: ami-0c02fb55956c7d316 # Amazon Linux 2
-      SecurityGroupIds:
-        - !Ref InstanceSecurityGroup
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.200.0.0/16
       Tags:
         - Key: Name
-          Value: WebServer
-
-  # Load Balancer
-  WebAppELB:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
-    Properties:
-      Subnets:
-        - !Ref VPC1Subnet
-      Listeners:
-        - LoadBalancerPort: 80
-          InstancePort: 80
-          Protocol: HTTP
-      HealthCheck:
-        Target: HTTP:80/
-        HealthyThreshold: 3
-        UnhealthyThreshold: 5
-        Interval: 30
-        Timeout: 5
-      Instances:
-        - !Ref WebInstance
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-
-  # RDS DB (MySQL)
-  Database:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      DBInstanceClass: db.t3.micro
-      AllocatedStorage: 20
-      Engine: mysql
-      MasterUsername: !Ref DBUsername
-      MasterUserPassword: !Ref DBPassword
-      DBInstanceIdentifier: medequip-db
-      VPCSecurityGroups:
-        - !Ref InstanceSecurityGroup
-      DBSubnetGroupName: !Ref DBSubnetGroup
-      PubliclyAccessible: false
-      MultiAZ: false
-
-  DBSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: Subnet group for DB
-      SubnetIds:
-        - !Ref VPC1Subnet
-        - !Ref VPC2Subnet
-
-  # DNS with Route53 (mocked domain setup)
-  HostedZone:
-    Type: AWS::Route53::HostedZone
-    Properties:
-      Name: medequip.internal
-
-  DNSRecord:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneName: medequip.internal.
-      Name: app.medequip.internal.
-      Type: A
-      TTL: '60'
-      ResourceRecords:
-        - !GetAtt WebAppELB.DNSName
+          Value: Bastion-SG-X
 
 Outputs:
-  VPC1ID:
-    Value: !Ref VPC1
-  VPC2ID:
-    Value: !Ref VPC2
-  PeeringConnection:
-    Value: !Ref VPCPeering
-  WebURL:
-    Value: !GetAtt WebAppELB.DNSName
-    Description: Public URL of the Load Balanced Web Application
+  VPCXSubnetId:
+    Value: !Ref VPCXSubnet
+    Export:
+      Name: med-arc-VPCXSubnetId
+  VPCXPublicSubnetId:
+    Value: !Ref VPCXPublicSubnet
+    Export:
+      Name: med-arc-VPCXPublicSubnetId
+  VPCYSubnetId:
+    Value: !Ref VPCYSubnet
+    Export:
+      Name: med-arc-VPCYSubnetId
+  VPCXInstanceSGId:
+    Value: !Ref VPCXInstanceSG
+    Export:
+      Name: med-arc-VPCXInstanceSGId
+  VPCYInstanceSGId:
+    Value: !Ref VPCYInstanceSG
+    Export:
+      Name: med-arc-VPCYInstanceSGId
+  BastionSGId:
+    Value: !Ref BastionSG
+    Export:
+      Name: med-arc-BastionSGId
