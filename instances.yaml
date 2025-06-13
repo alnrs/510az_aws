@@ -1,56 +1,29 @@
-AWSTemplateFormatVersion: 2010-09-09
-Description: EC2 instances and bastion host for VPC peering setup
+name: Deploy CloudFormation Template
 
-Resources:
-  VPCAInstance:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: ami-0a5c3558529277641
-      InstanceType: t2.micro
-      SubnetId: !ImportValue VPCASubnetId
-      SecurityGroupIds:
-        - !ImportValue VPCAInstanceSecurityGroupId
-      KeyName: vockey
-      Tags:
-        - Key: Name
-          Value: VPC-A-Instance
+on:
+  push:
+    branches:
+      - main  
 
-  VPCBInstance:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: ami-0a5c3558529277641
-      InstanceType: t2.micro
-      SubnetId: !ImportValue VPCBSubnetId
-      SecurityGroupIds:
-        - !ImportValue VPCBInstanceSecurityGroupId
-      KeyName: vockey
-      Tags:
-        - Key: Name
-          Value: VPC-B-Instance
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-  BastionInstance:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: ami-0a5c3558529277641
-      InstanceType: t2.micro
-      SubnetId: !ImportValue VPCAPublicSubnetId
-      SecurityGroupIds:
-        - !ImportValue BastionSecurityGroupId
-      KeyName: vockey
-      Tags:
-        - Key: Name
-          Value: Bastion-Host
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-Outputs:
-  VPCAInstanceId:
-    Description: ID of EC2 instance in VPC A
-    Value: !Ref VPCAInstance
-  VPCBInstanceId:
-    Description: ID of EC2 instance in VPC B
-    Value: !Ref VPCBInstance
-  BastionInstanceId:
-    Description: ID of Bastion Host instance
-    Value: !Ref BastionInstance
-  BastionPublicIp:
-    Description: Public IP of Bastion Host
-    Value: !GetAtt BastionInstance.PublicIp
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy CloudFormation Stack
+        run: |
+          aws cloudformation deploy \
+            --template-file main-code.yaml \
+            --stack-name my-main-stack \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
