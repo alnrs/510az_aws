@@ -1,24 +1,30 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: MedEquip Multi-VPC Cloud Infrastructure with Web App, DB, Peering, Load Balancer, and DNS
 
+# Parameters:
+#   KeyName:
+#     Description: EC2 KeyPair for SSH access
+#     Type: AWS::EC2::KeyPair::KeyName
+#   InstanceType:
+#     Type: String
+#     Default: t3.micro
+#     AllowedValues:
+#       - t3.micro
+#       - t3.small
+#       - t3.medium
+#     Description: EC2 instance type
+  # DBUsername:
+  #   NoEcho: true
+  #   Type: String
+  # DBPassword:
+  #   NoEcho: true
+  #   Type: String
+
 Parameters:
-  KeyName:
-    Description: EC2 KeyPair for SSH access
-    Type: AWS::EC2::KeyPair::KeyName
-  InstanceType:
+  SshCidr:
     Type: String
-    Default: t3.micro
-    AllowedValues:
-      - t3.micro
-      - t3.small
-      - t3.medium
-    Description: EC2 instance type
-  DBUsername:
-    NoEcho: true
-    Type: String
-  DBPassword:
-    NoEcho: true
-    Type: String
+    Description: CIDR block for SSH access to bastion host (e.g., your IP)
+    Default: 0.0.0.0/0 
 
 Resources:
 
